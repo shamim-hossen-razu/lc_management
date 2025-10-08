@@ -1,0 +1,60 @@
+<odoo>
+  <data>
+    <!-- explicit list view definition -->
+<!--
+    <record model="ir.ui.view" id="lc_management.list">
+      <field name="name">lc_management list</field>
+      <field name="model">lc_management.lc_management</field>
+      <field name="arch" type="xml">
+        <list>
+          <field name="name"/>
+          <field name="value"/>
+          <field name="value2"/>
+        </list>
+      </field>
+    </record>
+-->
+
+    <!-- actions opening views on models -->
+<!--
+    <record model="ir.actions.act_window" id="lc_management.action_window">
+      <field name="name">lc_management window</field>
+      <field name="res_model">lc_management.lc_management</field>
+      <field name="view_mode">list,form</field>
+    </record>
+-->
+
+    <!-- server action to the one above -->
+<!--
+    <record model="ir.actions.server" id="lc_management.action_server">
+      <field name="name">lc_management server</field>
+      <field name="model_id" ref="model_lc_management_lc_management"/>
+      <field name="state">code</field>
+      <field name="code">
+        action = {
+          "type": "ir.actions.act_window",
+          "view_mode": "list,form",
+          "res_model": model._name,
+        }
+      </field>
+    </record>
+-->
+
+    <!-- Top menu item -->
+<!--
+    <menuitem name="lc_management" id="lc_management.menu_root"/>
+-->
+    <!-- menu categories -->
+<!--
+    <menuitem name="Menu 1" id="lc_management.menu_1" parent="lc_management.menu_root"/>
+    <menuitem name="Menu 2" id="lc_management.menu_2" parent="lc_management.menu_root"/>
+-->
+    <!-- actions -->
+<!--
+    <menuitem name="List" id="lc_management.menu_1_list" parent="lc_management.menu_1"
+              action="lc_management.action_window"/>
+    <menuitem name="Server to list" id="lc_management" parent="lc_management.menu_2"
+              action="lc_management.action_server"/>
+-->
+  </data>
+</odoo>
