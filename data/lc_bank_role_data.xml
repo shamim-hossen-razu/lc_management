@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <data noupdate="1">
+        <record id="lc_role_issuing" model="lc.bank.role">
+            <field name="name">Issuing</field>
+        </record>
+        <record id="lc_role_advising" model="lc.bank.role">
+            <field name="name">Advising</field>
+        </record>
+        <record id="lc_role_confirming" model="lc.bank.role">
+            <field name="name">Confirming</field>
+        </record>
+        <record id="lc_role_reimbursing" model="lc.bank.role">
+            <field name="name">Reimbursing</field>
+        </record>
+        <record id="lc_role_negotiating" model="lc.bank.role">
+            <field name="name">Negotiating</field>
+        </record>
+        <record id="lc_role_nominated" model="lc.bank.role">
+            <field name="name">Nominated</field>
+        </record>
+    </data>
+</odoo>
