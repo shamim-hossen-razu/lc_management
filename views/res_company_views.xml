@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <data>
+        <record id="view_company_form_inherit" model="ir.ui.view">
+            <field name="name">res.company.form.inherit</field>
+            <field name="model">res.company</field>
+            <field name="inherit_id" ref="base.view_company_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//page[@name='branches']" position="after">
+                    <page string="Compliance Info" name="compliance_info">
+                        <group>
+                            <group string="Company Role" col="2">
+                                <field name="is_importer"/>
+                                <field name="is_exporter"/>
+                            </group>
+                            <group string="Trade License" col="2">
+                                <field name="trade_license_no"/>
+                                <field name="trade_license_expiry"/>
+                                <field name="trade_license_file" filename="trade_license_filename"/>
+                            </group>
+                        </group>
+
+                        <group>
+                            <group string="Tax Identification" col="2">
+                                <field name="etin_no"/>
+                                <field name="etin_file" filename="etin_filename"/>
+                                <field name="bin_no"/>
+                                <field name="bin_file" filename="bin_filename"/>
+                                <field name="vat_circle"/>
+                            </group>
+                            <group string="Import/Export Certifications" col="2">
+                                <field name="irc_no"/>
+                                <field name="irc_expiry"/>
+                                <field name="irc_file" filename="irc_filename"/>
+                                <field name="erc_no"/>
+                                <field name="erc_expiry"/>
+                            </group>
+                        </group>
+
+                        <group>
+                            <group string="Local Registration" col="2">
+                                <field name="rjsc_reg_no"/>
+                                <field name="rjsc_file" filename="rjsc_filename"/>
+                                <field name="partnership_deed_file" filename="partnership_deed_filename"/>
+                                <field name="moa_file" filename="moa_filename"/>
+                            </group>
+                            <group string="Tax Clearance Info" col="2">
+                                <field name="tax_clearance_no"/>
+                                <field name="tax_clearance_expiry"/>
+                                <field name="tax_clearance_file" filename="tax_clearance_filename"/>
+                            </group>
+                        </group>
+
+                        <group string="Association Membership">
+                            <group>
+                                <field name="association_membership_name"/>
+                                <field name="am_governing_body"/>
+                                <field name="am_membership_code"/>
+                                <field name="am_note"/>
+                            </group>
+                            <group>
+                                <field name="am_certificate_file" filename="am_certificate_filename"/>
+                                <field name="am_issue_date"/>
+                                <field name="am_expiry_date"/>
+                                <field name="am_state"/>
+                            </group>
+                        </group>
+
+                        <group string="Bonded Warehouse and Customs">
+                            <group>
+                                <field name="bonded_warehouse_license_no"/>
+                                <field name="bonded_warehouse_expiry"/>
+                            </group>
+                            <group>
+                                <field name="custom_reg_no"/>
+                            </group>
+                        </group>
+
+                        <group string="Internal Notes">
+                            <field name="notes" placeholder="Enter any remarks or compliance observations here..."/>
+                        </group>
+                    </page>
+                </xpath>
+                <xpath expr="//div[@name='button_box']" position="inside">
+                    <button name="action_view_documents"
+                            type="object"
+                            class="oe_stat_button"
+                            icon="fa-folder-open-o">
+                        <field name="document_count" widget="statinfo" string="Documents"/>
+                    </button>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="view_company_tree_inherit" model="ir.ui.view">
+            <field name="name">res.company.tree.inherit</field>
+            <field name="model">res.company</field>
+            <field name="inherit_id" ref="base.view_company_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='child_ids']" position="after">
+                    <field name="is_importer"/>
+                    <field name="is_exporter"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="view_res_company_kanban_inherit" model="ir.ui.view">
+            <field name="name">res.company.kanban.inherit</field>
+            <field name="model">res.company</field>
+            <field name="inherit_id" ref="base.view_res_company_kanban"/>
+            <field name="arch" type="xml">
+                <xpath expr="//t[@t-name='card']" position="inside">
+                    <div class="row mt-2">
+                        <div class="col-6 text-center">
+                            <strong class="me-2">Is Importer</strong>
+                            <field name="is_importer"/>
+                        </div>
+                        <div class="col-6 text-center">
+                            <strong class="me-2">Is Exporter</strong>
+                            <field name="is_exporter"/>
+                        </div>
+                    </div>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

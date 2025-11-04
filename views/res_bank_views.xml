@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <data>
+        <record id="view_res_bank_form_inherit" model="ir.ui.view">
+            <field name="name">res.bank.form.inherit</field>
+            <field name="model">res.bank</field>
+            <field name="inherit_id" ref="base.view_res_bank_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='bic']" position="attributes">
+                    <attribute name="string">
+                        Bank Identifier Code (BIC/SWIFT)
+                    </attribute>
+                </xpath>
+                <xpath expr="//group[@name='communication_details']" position="after">
+                    <group string="LC Capabilities &amp; Banking Details">
+                        <group col="2">
+                            <field name="bank_role_capabilities" widget="many2many_tags"/>
+                            <field name="iban"/>
+                            <field name="branch_code"/>
+                        </group>
+                        <group col="2">
+                            <field name="routing_number"/>
+                            <field name="iban_required"/>
+                            <field name="swift_required"/>
+                        </group>
+                    </group>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

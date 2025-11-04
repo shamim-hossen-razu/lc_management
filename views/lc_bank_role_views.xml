@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <data>
+        <record id="view_lc_bank_role_tree" model="ir.ui.view">
+            <field name="name">view.lc.bank.role.tree</field>
+            <field name="model">lc.bank.role</field>
+            <field name="arch" type="xml">
+                <list>
+                    <field name="name"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_lc_bank_role_form" model="ir.ui.view">
+            <field name="name">view.lc.bank.role.form</field>
+            <field name="model">lc.bank.role</field>
+            <field name="arch" type="xml">
+                <form>
+                    <div><strong class="me-2">Bank Role:</strong><field name="name"/></div>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_lc_bank_role" model="ir.actions.act_window">
+            <field name="name">LC Bank Roles</field>
+            <field name="res_model">lc.bank.role</field>
+            <field name="view_mode">list,form</field>
+        </record>
+
+        <menuitem id="menu_lc_bank_role"
+                  name="LC Bank Roles"
+                  parent="contacts.menu_config_bank_accounts"
+                  action="action_lc_bank_role"
+                  sequence="10"/>
+    </data>
+</odoo>
