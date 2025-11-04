@@ -1,0 +1,187 @@
+<odoo>
+    <!-- Main Tree View -->
+    <record id="view_lc_management_list" model="ir.ui.view">
+        <field name="name">lc.management.list</field>
+        <field name="model">lc.management</field>
+        <field name="arch" type="xml">
+            <list string="Letters of Credit">
+                <field name="lc_number"/>
+                <field name="applicant_id"/>
+                <field name="beneficiary_id"/>
+                <field name="issuing_bank_id"/>
+                <field name="advising_bank_id"/>
+                <field name="amount"/>
+                <field name="currency_id"/>
+                <field name="status"/>
+                <field name="expiration_date"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_lc_management_form" model="ir.ui.view">
+        <field name="name">lc.management.form</field>
+        <field name="model">lc.management</field>
+        <field name="arch" type="xml">
+            <form string="Letter of Credit" create="true" edit="true">
+                <header>
+                    <field name="status" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="lc_number"/>
+                            <field name="lc_type"/>
+                            <field name="status"/>
+                            <field name="reference"/>
+                        </group>
+                        <group>
+                            <field name="applicant_id"/>
+                            <field name="beneficiary_id"/>
+                            <field name="issuing_bank_id"/>
+                            <field name="advising_bank_id"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <!-- General Information -->
+                        <page string="General Information">
+                            <group>
+                                <group string="Account &amp; Details">
+                                    <field name="acc_name"/>
+                                    <field name="account_no"/>
+                                    <field name="amount"/>
+                                    <field name="currency_id"/>
+                                    <field name="currency_rate"/>
+                                    <field name="margin_percentage"/>
+                                </group>
+                                <group string="Important Dates">
+                                    <field name="date_of_issue"/>
+                                    <field name="expiration_date"/>
+                                    <field name="bonded_warehouse_expiry"/>
+                                    <field name="reminder_date"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- Shipment -->
+                        <page string="Shipment">
+                            <group>
+                                <group >
+                                    <field name="mode_of_shipment"/>
+                                    <field name="partial_shipment"/>
+                                </group>
+                                <group>
+                                    <field name="transshipment"/>
+                                    <field name="required_documents"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- Availability & Charges -->
+                        <page string="Availability and Charges">
+                            <group>
+                                <group>
+                                    <field name="available_by"/>
+                                </group>
+                                <group>
+                                    <field name="charges_borne_by"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- Revolving LC -->
+                        <page string="Revolving" invisible="lc_type not in ['revolving'] ">
+                            <group>
+                                <group>
+                                    <field name="parent_lc_id"/>
+                                </group>
+                                <group>
+                                    <field name="revolving_period"/>
+                                    <field name="revolving_limit"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- Insurance -->
+                        <page string="Insurance">
+                            <group>
+                                <group>
+                                    <field name="insurance_policy_no"/>
+                                </group>
+                                <group>
+                                    <field name="insurance_company_id"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- Certificates -->
+                        <page string="Certificates">
+                            <group>
+                                <group>
+                                    <field name="noc"/>
+                                    <field name="bin_certificate"/>
+                                </group>
+                                <group>
+                                    <field name="tax_clearance_certificate"/>
+                                    <field name="etin_certificate"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- Terms & Remarks -->
+                        <page string="Terms and Remarks">
+                            <group>
+                                <group>
+                                    <field name="terms_and_conditions"/>
+                                </group>
+                                <group>
+                                    <field name="remarks"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- Attachments -->
+                        <page string="Attachments">
+                            <field name="attachment_ids" widget="many2many_binary"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search View -->
+<!--    <record id="view_lc_management_search" model="ir.ui.view">-->
+<!--        <field name="name">lc.management.search</field>-->
+<!--        <field name="model">lc.management</field>-->
+<!--        <field name="arch" type="xml">-->
+<!--            <search string="Search LC">-->
+<!--                <field name="lc_number"/>-->
+<!--                <field name="applicant_id"/>-->
+<!--                <field name="beneficiary_id"/>-->
+<!--                <field name="issuing_bank_id"/>-->
+<!--                <field name="status"/>-->
+<!--                <filter string="Active" domain="[('status','=','active')]"/>-->
+<!--                <filter string="Expired" domain="[('status','=','expired')]"/>-->
+<!--                <filter string="Draft" domain="[('status','=','draft')]"/>-->
+<!--            </search>-->
+<!--        </field>-->
+<!--    </record>-->
+
+    <!-- Action -->
+    <record id="action_lc_management" model="ir.actions.act_window">
+        <field name="name">Letter of Credit</field>
+        <field name="res_model">lc.management</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create and manage Letters of Credit here.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu Items -->
+    <menuitem id="menu_lc_root" name="LC Management" sequence="10"/>
+    <menuitem id="menu_lc_main" name="Letters of Credit" parent="menu_lc_root" action="action_lc_management" sequence="1"/>
+</odoo>

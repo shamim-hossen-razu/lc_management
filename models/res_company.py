@@ -38,6 +38,19 @@ class ResCompany(models.Model):
 
     association_membership_id = fields.Many2one('association.membership', string="Association Membership")
 
+    association_membership_name = fields.Char(string="Association Name")
+    am_governing_body = fields.Char(string="Governing Body")
+    am_membership_code = fields.Char(string="Membership Code")
+    am_issue_date = fields.Date(string="Issue Date")
+    am_expiry_date = fields.Date(string="Expiry Date")
+    am_certificate_file = fields.Binary(string="Membership Certificate File")
+    am_certificate_filename = fields.Char(string="Membership Certificate PDF Filename")
+    am_note = fields.Text(string="Notes")
+    am_state = fields.Selection([
+        ('valid', 'Valid'),
+        ('expired', 'Expired')
+    ], string="State", compute="_compute_state", store=True)
+
     bonded_warehouse_license_no = fields.Char(string="Bonded Warehouse License No.")
     bonded_warehouse_expiry = fields.Date(string="Bonded Warehouse Expiry")
 
@@ -66,6 +79,7 @@ class ResCompany(models.Model):
             'tax_clearance_file',
             'partnership_deed_file',
             'moa_file',
+            'am_certificate_file',
         ]
 
 
@@ -227,28 +241,38 @@ class ResCompany(models.Model):
         }
 
 
-class AssociationMembership(models.Model):
-    _name = "association.membership"
-    _description = "Association Membership"
-
-    name = fields.Char(string="Association Name")
-    governing_body = fields.Char(string="Governing Body")
-    membership_code = fields.Char(string="Membership Code")
-    issue_date = fields.Date(string="Issue Date")
-    expiry_date = fields.Date(string="Expiry Date")
-    certificate_file = fields.Binary(string="Membership Certificate File")
-    certificate_filename = fields.Char(string="Membership Certificate PDF Filename")
-    note = fields.Text(string="Notes")
-    state = fields.Selection([
-        ('valid', 'Valid'),
-        ('expired', 'Expired')
-    ], string="State", compute="_compute_state", store=True)
-
-    @api.depends('expiry_date')
+    @api.depends('am_expiry_date')
     def _compute_state(self):
         today = date.today()
         for record in self:
-            if record.expiry_date and record.expiry_date < today:
-                record.state = 'expired'
+            if record.am_expiry_date and record.am_expiry_date < today:
+                record.am_state = 'expired'
             else:
-                record.state = 'valid'
+                record.am_state = 'valid'
+
+
+# class AssociationMembership(models.Model):
+#     _name = "association.membership"
+#     _description = "Association Membership"
+#
+#     name = fields.Char(string="Association Name")
+#     governing_body = fields.Char(string="Governing Body")
+#     membership_code = fields.Char(string="Membership Code")
+#     issue_date = fields.Date(string="Issue Date")
+#     expiry_date = fields.Date(string="Expiry Date")
+#     certificate_file = fields.Binary(string="Membership Certificate File")
+#     certificate_filename = fields.Char(string="Membership Certificate PDF Filename")
+#     note = fields.Text(string="Notes")
+#     state = fields.Selection([
+#         ('valid', 'Valid'),
+#         ('expired', 'Expired')
+#     ], string="State", compute="_compute_state", store=True)
+#
+#     @api.depends('expiry_date')
+#     def _compute_state(self):
+#         today = date.today()
+#         for record in self:
+#             if record.expiry_date and record.expiry_date < today:
+#                 record.state = 'expired'
+#             else:
+#                 record.state = 'valid'

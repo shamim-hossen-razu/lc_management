@@ -51,14 +51,28 @@
                             </group>
                         </group>
 
-                        <group>
-                            <group string="Bonded Warehouse and Customs" col="2">
+                        <group string="Association Membership">
+                            <group>
+                                <field name="association_membership_name"/>
+                                <field name="am_governing_body"/>
+                                <field name="am_membership_code"/>
+                                <field name="am_note"/>
+                            </group>
+                            <group>
+                                <field name="am_certificate_file" filename="am_certificate_filename"/>
+                                <field name="am_issue_date"/>
+                                <field name="am_expiry_date"/>
+                                <field name="am_state"/>
+                            </group>
+                        </group>
+
+                        <group string="Bonded Warehouse and Customs">
+                            <group>
                                 <field name="bonded_warehouse_license_no"/>
                                 <field name="bonded_warehouse_expiry"/>
-                                <field name="custom_reg_no"/>
                             </group>
-                            <group string="Association Membership" col="2">
-                                <field name="association_membership_id"/>
+                            <group>
+                                <field name="custom_reg_no"/>
                             </group>
                         </group>
 

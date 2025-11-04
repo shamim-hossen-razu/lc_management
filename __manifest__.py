@@ -25,9 +25,10 @@ Long description of module's purpose
         'security/ir.model.access.csv',
         'data/lc_bank_role_data.xml',
         'views/res_company_views.xml',
-        'views/association_membership_views.xml',
+        # 'views/association_membership_views.xml',
         'views/res_bank_views.xml',
         'views/lc_bank_role_views.xml',
+        'views/lc_management_views.xml',
     ],
     # only loaded in demonstration mode
     'demo': [
