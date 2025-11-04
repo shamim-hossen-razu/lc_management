@@ -24,6 +24,7 @@ Long description of module's purpose
     'data': [
         'security/ir.model.access.csv',
         'data/lc_bank_role_data.xml',
+        'data/lc_sequence.xml',
         'views/res_company_views.xml',
         'views/res_bank_views.xml',
         'views/lc_bank_role_views.xml',

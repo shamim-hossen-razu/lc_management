@@ -1,11 +1,14 @@
-from odoo import models, fields
+from odoo import models, fields, api, _
+from datetime import date
+
 
 class LcManagement(models.Model):
     _name = 'lc.management'
     _description = 'Letter of Credit Management'
+    _rec_name = 'lc_number'
 
     # LC related basic information and its types
-    lc_number = fields.Char(string="LC Number", required=True)
+    lc_number = fields.Char(string="LC Number", readonly=True, copy=False)
 
     applicant_id = fields.Many2one('res.partner', string="Applicant", help="Buyer applying for the LC")
     beneficiary_id = fields.Many2one('res.partner', string="Beneficiary", help="Seller or exporter")
@@ -107,3 +110,12 @@ class LcManagement(models.Model):
 
     # Reminders
     reminder_date = fields.Date(string="Reminder Date", help="Date to trigger alert before expiry")
+
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if not vals.get('lc_number'):
+                vals['lc_number'] = self.env['ir.sequence'].next_by_code('lc.management') or _('New')
+
+        return super().create(vals_list)
