@@ -32,14 +32,16 @@
                         <group>
                             <field name="lc_number"/>
                             <field name="lc_type"/>
-                            <field name="status"/>
-                            <field name="reference"/>
-                        </group>
-                        <group>
-                            <field name="applicant_id"/>
-                            <field name="beneficiary_id"/>
                             <field name="issuing_bank_id"/>
                             <field name="advising_bank_id"/>
+                            <field name="status"/>
+                        </group>
+                        <group>
+                            <field name="applicant_company_id"/>
+                            <field name="applicant_id"/>
+                            <field name="beneficiary_company_id"/>
+                            <field name="beneficiary_id" domain="[('parent_id', '=', beneficiary_company_id), ('is_company', '=', False)]"/>
+                            <field name="reference"/>
                         </group>
                     </group>
 
