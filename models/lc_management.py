@@ -180,8 +180,9 @@ class LcManagement(models.Model):
                 elif rec.warning_interval == 'month':
                     rec.reminder_date = expiry_date - timedelta(days=30)
 
-                if rec.reminder_date < issue_date or rec.reminder_date > expiry_date:
-                    raise ValidationError(_("Reminder date must be between issue and expiry dates."))
+                if rec.reminder_date:
+                    if rec.reminder_date < issue_date or rec.reminder_date > expiry_date:
+                        raise ValidationError(_("Reminder date must be between issue and expiry dates."))
 
 
     @api.onchange('reminder_date')
