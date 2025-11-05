@@ -58,7 +58,8 @@
                                 <group string="Important Dates">
                                     <field name="date_of_issue"/>
                                     <field name="expiration_date"/>
-                                    <field name="bonded_warehouse_expiry"/>
+                                    <field name="bonded_warehouse_expiry" invisible="lc_type not in ['import', 'standby', 'transferable', 'back_to_back', 'foreign_back_to_back', 'local_back_to_back']"/>
+                                    <field name="warning_interval"/>
                                     <field name="reminder_date"/>
                                 </group>
                             </group>
