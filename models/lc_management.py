@@ -1,5 +1,6 @@
 from odoo import models, fields, api, _
-from datetime import date
+from datetime import date, timedelta
+from odoo.exceptions import ValidationError
 
 
 class LcManagement(models.Model):
@@ -56,7 +57,7 @@ class LcManagement(models.Model):
         ('rail', 'Rail'),
         ('courier', 'Courier'),
     ], string="Mode of Shipment")
-    bonded_warehouse_expiry = fields.Date(string="Bonded Warehouse Expiry")
+    bonded_warehouse_expiry = fields.Date(string="Bonded Warehouse Expiry", help="Only available for import, back_to_back, foreign_back_to_back, local_back_to_back, transferable, standby.")
 
     # Related fields
     # product_line_ids = fields.One2many()
@@ -111,6 +112,11 @@ class LcManagement(models.Model):
     # Reminders
     reminder_date = fields.Date(string="Reminder Date", help="Date to trigger alert before expiry")
 
+    warning_interval = fields.Selection([
+        ('week', '1 Week before'),
+        ('month', '1 Month before'),
+    ], string="Warning Interval")
+
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -119,3 +125,74 @@ class LcManagement(models.Model):
                 vals['lc_number'] = self.env['ir.sequence'].next_by_code('lc.management') or _('New')
 
         return super().create(vals_list)
+
+
+    @api.model
+    def default_get(self, fields_list):
+        vals = super().default_get(fields_list)
+        vals['date_of_issue'] = fields.Datetime.now()
+
+        return vals
+
+
+    @api.onchange('date_of_issue')
+    def _check_issue_date_warning(self):
+        today = date.today()
+        for rec in self:
+            if rec.date_of_issue:
+                issue_date = rec.date_of_issue.date()
+                if issue_date < today:
+                    return {
+                        'warning': {
+                            'title': _('Reminder Date Alert'),
+                            'message': _("Issue date is in the past.")
+                        }
+                    }
+
+
+    @api.onchange('date_of_issue', 'lc_type')
+    def _compute_expiry_date(self):
+        for rec in self:
+            if not rec.date_of_issue:
+                continue
+            if rec.lc_type == 'at_sight':
+                rec.expiration_date = rec.date_of_issue + timedelta(days=90)
+            elif rec.lc_type == 'deferred':
+                rec.expiration_date = rec.date_of_issue + timedelta(days=180)
+            elif rec.lc_type == 'standby':
+                rec.expiration_date = rec.date_of_issue + timedelta(days=365)
+            elif rec.lc_type == 'revolving':
+                rec.expiration_date = rec.date_of_issue + timedelta(days=365)
+            else:
+                rec.expiration_date = rec.date_of_issue + timedelta(days=180)
+
+
+    @api.onchange('warning_interval', 'date_of_issue', 'expiration_date')
+    def _compute_reminder_date(self):
+        for rec in self:
+            if rec.date_of_issue and rec.expiration_date:
+
+                issue_date = fields.Date.to_date(rec.date_of_issue)
+                expiry_date = fields.Date.to_date(rec.expiration_date)
+
+                if rec.warning_interval == 'week':
+                    rec.reminder_date = expiry_date - timedelta(weeks=1)
+                elif rec.warning_interval == 'month':
+                    rec.reminder_date = expiry_date - timedelta(days=30)
+
+                if rec.reminder_date < issue_date or rec.reminder_date > expiry_date:
+                    raise ValidationError(_("Reminder date must be between issue and expiry dates."))
+
+
+    @api.onchange('reminder_date')
+    def _onchange_reminder_date_warning(self):
+        for rec in self:
+            if rec.reminder_date:
+                today = date.today()
+                if rec.reminder_date <= today:
+                    return {
+                        'warning': {
+                            'title': _('Reminder Date Alert'),
+                            'message': _('Reminder Date has already passed or is today. Take necessary action.')
+                        }
+                    }
