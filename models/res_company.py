@@ -249,30 +249,3 @@ class ResCompany(models.Model):
                 record.am_state = 'expired'
             else:
                 record.am_state = 'valid'
-
-
-# class AssociationMembership(models.Model):
-#     _name = "association.membership"
-#     _description = "Association Membership"
-#
-#     name = fields.Char(string="Association Name")
-#     governing_body = fields.Char(string="Governing Body")
-#     membership_code = fields.Char(string="Membership Code")
-#     issue_date = fields.Date(string="Issue Date")
-#     expiry_date = fields.Date(string="Expiry Date")
-#     certificate_file = fields.Binary(string="Membership Certificate File")
-#     certificate_filename = fields.Char(string="Membership Certificate PDF Filename")
-#     note = fields.Text(string="Notes")
-#     state = fields.Selection([
-#         ('valid', 'Valid'),
-#         ('expired', 'Expired')
-#     ], string="State", compute="_compute_state", store=True)
-#
-#     @api.depends('expiry_date')
-#     def _compute_state(self):
-#         today = date.today()
-#         for record in self:
-#             if record.expiry_date and record.expiry_date < today:
-#                 record.state = 'expired'
-#             else:
-#                 record.state = 'valid'

@@ -182,6 +182,6 @@
     </record>
 
     <!-- Menu Items -->
-    <menuitem id="menu_lc_root" name="LC Management" sequence="10"/>
+    <menuitem id="menu_lc_root" name="LC Management" sequence="10" web_icon="lc_management,static/description/icon.png"/>
     <menuitem id="menu_lc_main" name="Letters of Credit" parent="menu_lc_root" action="action_lc_management" sequence="1"/>
 </odoo>
