@@ -11,8 +11,11 @@ class LcManagement(models.Model):
     # LC related basic information and its types
     lc_number = fields.Char(string="LC Number", readonly=True, copy=False)
 
-    applicant_id = fields.Many2one('res.partner', string="Applicant", help="Buyer applying for the LC")
-    beneficiary_id = fields.Many2one('res.partner', string="Beneficiary", help="Seller or exporter")
+    applicant_id = fields.Many2one('res.partner', string="Applicant", default=lambda self: self.env.user.partner_id, readonly=True, help="Buyer applying for the LC")
+    applicant_company_id = fields.Many2one('res.company', string="Applicant Company", compute="_compute_applicant_company", store=True, readonly=True, help="Parent company of the logged-in user")
+
+    beneficiary_company_id = fields.Many2one('res.partner', string="Beneficiary Company", domain=[('is_company', '=', True)], help="Company supplying the goods")
+    beneficiary_id = fields.Many2one('res.partner', string="Beneficiary", domain=[], help="Individual contact under the selected company (Seller/Exporter)")
 
     issuing_bank_id = fields.Many2one('res.bank', string="Issuing Bank", help="Bank issuing the LC for the buyer")
     advising_bank_id = fields.Many2one('res.bank', string="Advising Bank", help="Bank advising the LC to the seller")
@@ -197,3 +200,32 @@ class LcManagement(models.Model):
                             'message': _('Reminder Date has already passed or is today. Take necessary action.')
                         }
                     }
+
+    @api.depends('applicant_id')
+    def _compute_applicant_company(self):
+        for rec in self:
+            user = self.env.user
+            if user and user.company_id:
+                rec.applicant_company_id = user.company_id.id  # assign ID
+            else:
+                rec.applicant_company_id = False
+
+    @api.onchange('beneficiary_company_id')
+    def _onchange_beneficiary_company_id(self):
+        for rec in self:
+            rec.beneficiary_id = False  # Clear selection each time
+
+            if rec.beneficiary_company_id:
+                # Only show child contacts (is_company=False)
+                domain = [
+                    ('parent_id', '=', rec.beneficiary_company_id.id),
+                    ('is_company', '=', False)
+                ]
+            else:
+                domain = [('id', '=', False)]  # Show nothing
+
+            return {
+                'domain': {
+                    'beneficiary_id': domain
+                }
+            }
