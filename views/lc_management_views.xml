@@ -50,7 +50,8 @@
                         <page string="General Information">
                             <group>
                                 <group string="Account &amp; Details">
-                                    <field name="acc_name"/>
+                                    <field name="bank_account_id" options="{'no_create': True}"/>
+                                    <field name="acc_holder_name"/>
                                     <field name="account_no"/>
                                     <field name="amount"/>
                                     <field name="currency_id"/>

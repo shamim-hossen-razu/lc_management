@@ -11,11 +11,29 @@ class LcManagement(models.Model):
     # LC related basic information and its types
     lc_number = fields.Char(string="LC Number", readonly=True, copy=False)
 
-    applicant_id = fields.Many2one('res.partner', string="Applicant", default=lambda self: self.env.user.partner_id, readonly=True, help="Buyer applying for the LC")
-    applicant_company_id = fields.Many2one('res.company', string="Applicant Company", compute="_compute_applicant_company", store=True, readonly=True, help="Parent company of the logged-in user")
+    applicant_id = fields.Many2one(
+        'res.partner',
+        string="Applicant",
+        default=lambda self: self.env.user.partner_id,
+        readonly=True,
+        help="Buyer applying for the LC")
+    applicant_company_id = fields.Many2one(
+        'res.company',
+        string="Applicant Company",
+        compute="_compute_applicant_company",
+        store=True, readonly=True,
+        help="Parent company of the logged-in user")
 
-    beneficiary_company_id = fields.Many2one('res.partner', string="Beneficiary Company", domain=[('is_company', '=', True)], help="Company supplying the goods")
-    beneficiary_id = fields.Many2one('res.partner', string="Beneficiary", domain=[], help="Individual contact under the selected company (Seller/Exporter)")
+    beneficiary_company_id = fields.Many2one(
+        'res.partner',
+        string="Beneficiary Company",
+        domain=[('is_company', '=', True)],
+        help="Company supplying the goods")
+    beneficiary_id = fields.Many2one(
+        'res.partner',
+        string="Beneficiary",
+        domain=[],
+        help="Individual contact under the selected company (Seller/Exporter)")
 
     issuing_bank_id = fields.Many2one('res.bank', string="Issuing Bank", help="Bank issuing the LC for the buyer")
     advising_bank_id = fields.Many2one('res.bank', string="Advising Bank", help="Bank advising the LC to the seller")
@@ -45,8 +63,15 @@ class LcManagement(models.Model):
     currency_id = fields.Many2one('res.currency', string="Currency", help="Currency of the LC amount")
     currency_rate = fields.Float(string="Currency Exchange Rate")
     margin_percentage = fields.Float(string="Margin Percentage", help="Margin required by the issuing bank")
-    acc_name = fields.Char(string="Account Name")
-    account_no = fields.Integer(string="Account Number")
+
+    # Selected bank account under that bank (filtered by applicant company)
+    bank_account_id = fields.Many2one(
+        'res.partner.bank',
+        string="Bank Account Name",
+        domain=[('bank_id', '=', issuing_bank_id), ('company_id', '=', applicant_company_id)],
+        help="Bank account of applicant company at selected bank")
+    acc_holder_name = fields.Char(string="Account Holder Name", compute="_compute_bank_account_details", store=True)
+    account_no = fields.Char(string="Account Number", compute="_compute_bank_account_details", store=True)
 
     # shipment information
     partial_shipment = fields.Boolean(string="Partial Shipment Allowed")
@@ -126,6 +151,28 @@ class LcManagement(models.Model):
         for vals in vals_list:
             if not vals.get('lc_number'):
                 vals['lc_number'] = self.env['ir.sequence'].next_by_code('lc.management') or _('New')
+
+            if not vals.get('issuing_bank_id') or not vals.get('bank_account_id'):
+                partner = self.env.user.partner_id
+                accounts = self.env['res.partner.bank'].search([('partner_id', '=', partner.id)])
+
+                if accounts:
+                    default = accounts.filtered('is_default_lc_account')
+
+                    # CASE 1: Only one account
+                    if len(accounts) == 1:
+                        selected_account = accounts[0]
+
+                    # CASE 2: Multiple with default
+                    elif default:
+                        selected_account = default[0]
+
+                    # CASE 3: Multiple without default
+                    else:
+                        selected_account = accounts[0]
+
+                    vals.setdefault('issuing_bank_id', selected_account.bank_id.id)
+                    vals.setdefault('bank_account_id', selected_account.id)
 
         return super().create(vals_list)
 
@@ -229,3 +276,50 @@ class LcManagement(models.Model):
                     'beneficiary_id': domain
                 }
             }
+
+
+    @api.depends('bank_account_id')
+    def _compute_bank_account_details(self):
+        for rec in self:
+            if rec.bank_account_id:
+                rec.acc_holder_name = rec.bank_account_id.acc_holder_name
+                rec.account_no = rec.bank_account_id.acc_number
+            else:
+                rec.acc_holder_name = False
+                rec.account_no = False
+
+
+    @api.onchange('issuing_bank_id')
+    def _onchange_issuing_bank_id(self):
+        for rec in self:
+            rec.bank_account_id = False
+
+            if not rec.issuing_bank_id or not rec.applicant_company_id:
+                return
+
+            accounts = self.env['res.partner.bank'].search([
+                ('bank_id', '=', rec.issuing_bank_id.id), ('partner_id', '=', rec.applicant_id.id)
+            ])
+
+            if not accounts:
+                rec.issuing_bank_id = False
+
+                return {
+                    'warning': {
+                        'title': _('Missing Bank Account'),
+                        'message': _(
+                            'The selected bank has no account for the applicant\'s company.\n'
+                            'Please create one before proceeding.'
+                        )
+                    }
+                }
+
+            if len(accounts) == 1:
+                rec.bank_account_id = accounts[0]
+                return
+
+            default = accounts.filtered('is_default_lc_account')
+            if default:
+                rec.bank_account_id = default[0]
+            else:
+                rec.bank_account_id = accounts[0]

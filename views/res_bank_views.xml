@@ -27,5 +27,27 @@
                 </xpath>
             </field>
         </record>
+
+        <record id="view_res_partner_bank_form_inherit_lc" model="ir.ui.view">
+            <field name="name">res.partner.bank.form.inherit.lc.default</field>
+            <field name="model">res.partner.bank</field>
+            <field name="inherit_id" ref="base.view_partner_bank_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='allow_out_payment']" position="after">
+                    <field name="is_default_lc_account"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="view_res_partner_bank_tree_inherit_lc" model="ir.ui.view">
+            <field name="name">res.partner.bank.tree.inherit.lc.default</field>
+            <field name="model">res.partner.bank</field>
+            <field name="inherit_id" ref="base.view_partner_bank_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='allow_out_payment']" position="after">
+                    <field name="is_default_lc_account"/>
+                </xpath>
+            </field>
+        </record>
     </data>
 </odoo>
