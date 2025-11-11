@@ -1,7 +1,7 @@
 from odoo import models, fields, api, _
 from datetime import date, timedelta
 from odoo.exceptions import ValidationError
-
+from lxml import etree
 
 class LcManagement(models.Model):
     _name = 'lc.management'
@@ -146,6 +146,18 @@ class LcManagement(models.Model):
     ], string="Warning Interval")
 
 
+    @api.model
+    def fields_get(self, allfields=None, attributes=None):
+        res = super().fields_get(allfields=allfields, attributes=attributes)
+        if 'issuing_bank_id' in res:
+            partner = self.env.user.partner_id
+            if partner:
+                accounts = self.env['res.partner.bank'].search([('partner_id', '=', partner.id)])
+                bank_ids = accounts.mapped('bank_id').ids
+                res['issuing_bank_id']['domain'] = [('id', 'in', bank_ids)]
+        return res
+
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
@@ -180,6 +192,18 @@ class LcManagement(models.Model):
     @api.model
     def default_get(self, fields_list):
         vals = super().default_get(fields_list)
+
+        user_partner = self.env.user.partner_id
+
+        if 'issuing_bank_id' in fields_list:
+            accounts = self.env['res.partner.bank'].search([('partner_id', '=', user_partner.id)])
+            bank_ids = accounts.mapped('bank_id').ids
+
+            # Inject domain context
+            self = self.with_context({
+                'default_issuing_bank_id_domain': [('id', 'in', bank_ids)]
+            })
+
         vals['date_of_issue'] = fields.Datetime.now()
 
         return vals

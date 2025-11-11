@@ -2,13 +2,13 @@
 {
     'name': "lc_management",
 
-    'summary': "Short (1 phrase/line) summary of the module's purpose",
+    'summary': "Manage the lifecycle of Letters of Credit across Inventory, Sales, Purchases, Accouting, and Contacts module.",
 
     'description': """
-Long description of module's purpose
+This module manages the full process of Letters of Credit (LC) used in trade operations. It allows tracking and controlling LCs for both sales and purchases, assigns roles to banks involved, and organizes all related documents. The module links with inventory, invoicing, and accounting to ensure smooth coordination across departments.
     """,
 
-    'author': "My Company",
+    'author': "BJIT Limited",
     'website': "https://www.yourcompany.com",
 
     # Categories can be used to filter modules in modules listing

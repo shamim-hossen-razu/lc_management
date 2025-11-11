@@ -45,7 +45,7 @@ class ResPartnerBank(models.Model):
     def _ensure_single_default(self):
         for rec in self:
             self.env['res.partner.bank'].search([
-                ('partner_id', '=', rec.partner_id.id), ('id', '!=', rec.id), ('is_default_lc_account', '=', True)
+                ('partner_id', '=', rec.partner_id.id), ('bank_id', '=', rec.bank_id.id), ('id', '!=', rec.id), ('is_default_lc_account', '=', True)
             ]).write({'is_default_lc_account': False})
 
 
@@ -55,6 +55,7 @@ class ResPartnerBank(models.Model):
             if rec.is_default_lc_account:
                 existing_default = self.env['res.partner.bank'].search([
                     ('partner_id', '=', rec.partner_id.id),
+                    ('bank_id', '=', rec.bank_id.id),
                     ('is_default_lc_account', '=', True),
                     ('id', '!=', rec.id),
                 ], limit=1)
