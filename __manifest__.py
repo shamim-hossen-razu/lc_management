@@ -1,26 +1,18 @@
 # -*- coding: utf-8 -*-
 {
-    'name': "lc_management",
-
-    'summary': "Short (1 phrase/line) summary of the module's purpose",
+    'name': "LC Management",
+    'summary': "Manage Letters of Credit (LC) within Odoo",
 
     'description': """
-Long description of module's purpose
+        Custom module for managing LCs
     """,
-
-    'author': "My Company",
-    'website': "https://www.yourcompany.com",
-
-    # Categories can be used to filter modules in modules listing
-    # Check https://github.com/odoo/odoo/blob/15.0/odoo/addons/base/data/ir_module_category_data.xml
-    # for the full list
+    'author': "BJIT Limited",
+    'license': 'LGPL-3',
+    'website': "https://www.bjitgroup.com",
     'category': 'Uncategorized',
-    'version': '0.1',
+    'version': '18.0.1.0.0',
+    'depends': ['base', 'sale_management', 'purchase', 'stock', 'accountant', 'contacts', 'documents'],
 
-    # any module necessary for this one to work correctly
-    'depends': ['base', 'sale_management', 'purchase', 'stock', 'accountant', 'contacts'],
-
-    # always loaded
     'data': [
         'security/ir.model.access.csv',
         'data/lc_bank_role_data.xml',
@@ -30,7 +22,7 @@ Long description of module's purpose
         'views/lc_bank_role_views.xml',
         'views/lc_management_views.xml',
     ],
-    # only loaded in demonstration mode
+
     'demo': [
         'demo/demo.xml',
     ],

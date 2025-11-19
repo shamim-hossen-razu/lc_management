@@ -35,6 +35,26 @@
                             <field name="issuing_bank_id"/>
                             <field name="advising_bank_id"/>
                             <field name="status"/>
+                            <label
+                                        for="purchase_order_ids"
+                                        id="purchase_order_ids_label"
+                                    />
+                            <div>
+                                <field name="purchase_order_ids"
+                                       widget="many2many_tags"
+                                       domain="[
+                                           ('state', '=', 'purchase'),
+                                           '|',
+                                           ('partner_id', '=', beneficiary_company_id),
+                                           ('partner_id.parent_id', '=', beneficiary_company_id)
+                                       ]"/>
+                                <button name="action_compute_po_amount"
+                                        type="object"
+                                        string="Compute from POs"
+                                        help="Compute LC Amount based on selected Purchase Orders."
+                                        class="oe_link pt-2"/>
+                            </div>
+
                         </group>
                         <group>
                             <field name="applicant_company_id"/>
@@ -147,6 +167,18 @@
                         <!-- Attachments -->
                         <page string="Attachments">
                             <field name="attachment_ids" widget="many2many_binary"/>
+                        </page>
+
+                        <!--Currency Exchange Rates -->
+                        <page string="Currency Exchange Rates" name="currency_rates">
+                            <field name="currency_rate_line_ids" nolabel="1">
+                                    <list string="Currency Exchange Rate" editable="bottom">
+                                        <field name="currency_id"/>
+                                        <field name="rate"/>
+                                        <field name="amount" sum="Total"/>
+                                        <field name="amount_in_target" sum="Total"/>
+                                    </list>
+                            </field>
                         </page>
                     </notebook>
                 </sheet>

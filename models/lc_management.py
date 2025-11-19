@@ -41,8 +41,16 @@ class LcManagement(models.Model):
         ('local_back_to_back', 'Local Back-to-Back LC'),
     ], string="LC Type", required=True)
 
+    purchase_order_ids = fields.Many2many(
+        'purchase.order',
+        'lc_management_purchase_order_rel',
+        'lc_id',
+        'purchase_id',
+        string='Purchase Orders',
+    )
+
     # Currency and finance information
-    currency_id = fields.Many2one('res.currency', string="Currency", help="Currency of the LC amount")
+    currency_id = fields.Many2one('res.currency', string="Currency", default=lambda self: self.env.ref('base.USD'), help="Currency of the LC amount")
     currency_rate = fields.Float(string="Currency Exchange Rate")
     margin_percentage = fields.Float(string="Margin Percentage", help="Margin required by the issuing bank")
     acc_name = fields.Char(string="Account Name")
@@ -101,6 +109,10 @@ class LcManagement(models.Model):
     # Other Information
     remarks = fields.Text(string="Remarks")
     attachment_ids = fields.Many2many('ir.attachment', string="Attachments")
+    company_id = fields.Many2one(
+        'res.company',
+        default=lambda self: self.env.company,
+    )
 
     # Certificates
     noc = fields.Char(string="NOC")
@@ -119,6 +131,10 @@ class LcManagement(models.Model):
         ('week', '1 Week before'),
         ('month', '1 Month before'),
     ], string="Warning Interval")
+    
+    currency_rate_line_ids = fields.One2many(
+        'lc.currency.rate.line', 'lc_id', string="Currency Rates", readonly=True
+    )
 
 
     @api.model_create_multi
@@ -229,3 +245,44 @@ class LcManagement(models.Model):
                     'beneficiary_id': domain
                 }
             }
+
+
+    # Button action to compute PO amounts and exchange rates
+
+    def action_compute_po_amount(self):
+        for rec in self:
+            target_currency = rec.currency_id or rec.env.ref('base.USD')
+            rec.currency_rate_line_ids.unlink()
+            currency_map = {}
+            for po in rec.purchase_order_ids:
+                curr = po.currency_id
+                if curr not in currency_map:
+                    currency_map[curr] = {'amount': 0.0, 'rate': curr.rate}
+                currency_map[curr]['amount'] += po.amount_total
+            lines = []
+            total = 0.0
+            for curr, vals in currency_map.items():
+                amount_in_target = curr._convert(
+                    vals['amount'], target_currency, rec.company_id or self.env.company, fields.Date.today()
+                )
+                company = rec.company_id or self.env.company
+
+                rate = self.env['res.currency']._get_conversion_rate(
+                    from_currency=curr,
+                    to_currency=target_currency,
+                    company=company,
+                    date=fields.Date.today(),
+                )
+
+                total += amount_in_target
+                lines.append((0, 0, {
+                    'currency_id': curr.id,
+                    'rate': rate,
+                    'amount': vals['amount'],
+                    'amount_in_target': amount_in_target,
+                }))
+            rec.currency_rate_line_ids = lines
+            rec.amount = total
+            rec.currency_id = target_currency
+
+

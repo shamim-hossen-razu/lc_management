@@ -201,7 +201,8 @@ class ResCompany(models.Model):
 
     def write(self, vals):
         res = super().write(vals)
-        self._validate_compliance_documents()
+        if self.exists():
+            self._validate_compliance_documents()
         self._sync_compliance_documents(vals)
         return res
 
@@ -209,7 +210,6 @@ class ResCompany(models.Model):
     @api.model_create_multi
     def create(self, vals):
         company = super().create(vals)
-        company._validate_compliance_documents()
         self._sync_compliance_documents(vals)
         return company
 

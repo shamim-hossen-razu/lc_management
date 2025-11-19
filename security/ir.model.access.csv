@@ -1,3 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_lc_bank_role_user,lc.bank.role.user,model_lc_bank_role,base.group_user,1,1,1,1
 access_lc_management_user,access.lc.management.user,model_lc_management,base.group_user,1,1,1,1
+lc_currency_rate_line_user,lc_currency_rate_line_user,model_lc_currency_rate_line,base.group_user,1,1,1,1
