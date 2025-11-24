@@ -153,7 +153,19 @@ class ResCompany(models.Model):
                         'tag_ids': [(6, 0, [tag.id])],
                     })
 
-
+    @api.constrains(
+        'trade_license_no',
+        'trade_license_file',
+        'trade_license_expiry',
+        'bin_no',
+        'bin_file',
+        'etin_no',
+        'etin_file',
+        'irc_no',
+        'irc_file',
+        'irc_expiry',
+        'is_importer'
+    )
     def _validate_compliance_documents(self):
         """Validate required compliance documents only when saving"""
         today = date.today()
@@ -201,8 +213,6 @@ class ResCompany(models.Model):
 
     def write(self, vals):
         res = super().write(vals)
-        if self.exists():
-            self._validate_compliance_documents()
         self._sync_compliance_documents(vals)
         return res
 
