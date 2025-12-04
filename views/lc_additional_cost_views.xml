@@ -1,0 +1,77 @@
+<odoo>
+
+    <!-- List view -->
+    <record id="view_lc_additional_cost_list" model="ir.ui.view">
+        <field name="name">lc.additional.cost.list</field>
+        <field name="model">lc.additional.cost</field>
+        <field name="arch" type="xml">
+            <list string="Additional Costs">
+                <field name="name"/>
+                <field name="lc_type"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form view -->
+    <record id="view_lc_additional_cost_form" model="ir.ui.view">
+        <field name="name">lc.additional.cost.form</field>
+        <field name="model">lc.additional.cost</field>
+        <field name="arch" type="xml">
+            <form string="Additional Cost">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="description"/>
+                        </group>
+                        <group>
+                            <field name="lc_type"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_lc_additional_cost" model="ir.actions.act_window">
+        <field name="name">Additional Costs</field>
+        <field name="res_model">lc.additional.cost</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p>
+                Configure additional cost types per LC type. If LC Type is blank,
+                the cost will be available for all LC types.
+            </p>
+        </field>
+    </record>
+
+
+
+
+    <menuitem
+        id="menu_lc_configuration"
+        name="Configuration"
+        parent="menu_lc_root"
+        sequence="50"
+    />
+
+    <menuitem
+        id="menu_lc_cost_group"
+        name="Cost Management"
+        parent="menu_lc_configuration"
+        sequence="5"
+        action=""
+    />
+
+    <menuitem
+        id="menu_lc_additional_cost"
+        name="Additional Costs"
+        parent="menu_lc_cost_group"
+        action="action_lc_additional_cost"
+        sequence="10"
+    />
+
+</odoo>
