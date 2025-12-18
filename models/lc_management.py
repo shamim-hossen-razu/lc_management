@@ -1,12 +1,14 @@
-from odoo import models, fields, api, _
+from odoo import models, fields, api, _, tools
 from datetime import date, timedelta
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError, UserError
+
 
 
 class LcManagement(models.Model):
     _name = 'lc.management'
     _description = 'Letter of Credit Management'
     _rec_name = 'lc_number'
+    _order = 'create_date desc, id desc'
 
     # LC related basic information and its types
     lc_number = fields.Char(string="LC Number", readonly=True, copy=False)
@@ -149,6 +151,30 @@ class LcManagement(models.Model):
     )
 
 
+    split_method = fields.Selection([
+        ('equal', 'Equal'),
+        ('by_quantity', 'By Quantity'),
+        ('by_current_cost_price', 'By Current Cost'),
+        ('by_weight', 'By Weight'),
+        ('by_volume', 'By Volume'),
+    ], string='Split Method', default='equal')
+
+    # helper for button visibility
+    can_split_cost = fields.Boolean(
+        compute='_compute_can_split_cost',
+        string='Can Split Cost'
+    )
+    po_cost_line_ids = fields.One2many(
+        'lc.po.cost.line',
+        'lc_id',
+        string="PO Cost Split",
+        readonly=True,
+    )
+    po_cost_line_count = fields.Integer(
+        string="PO Cost Lines",
+        compute="_compute_po_cost_line_count",
+    )
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
@@ -234,7 +260,7 @@ class LcManagement(models.Model):
         for rec in self:
             user = self.env.user
             if user and user.company_id:
-                rec.applicant_company_id = user.company_id.id  # assign ID
+                rec.applicant_company_id = user.company_id.id
             else:
                 rec.applicant_company_id = False
 
@@ -252,7 +278,7 @@ class LcManagement(models.Model):
                     ('is_company', '=', False)
                 ]
             else:
-                domain = [('id', '=', False)]  # Show nothing
+                domain = [('id', '=', False)]
 
             return {
                 'domain': {
@@ -375,4 +401,246 @@ class LcManagement(models.Model):
                 line_commands.append((0, 0, line_vals))
 
             rec.additional_cost_line_ids = line_commands
+
+    # ---------------------------------------------------------------
+    # Button visibility:
+    #  - status must be 'submitted'
+    #  - every related PO must have at least one draft vendor bill
+    # ---------------------------------------------------------------
+    @api.depends(
+        'status',
+        'purchase_order_ids.invoice_ids.state',
+        'purchase_order_ids.invoice_ids.move_type',
+    )
+    def _compute_can_split_cost(self):
+        for rec in self:
+            # must be submitted and have at least one PO
+            if rec.status != 'submitted' or not rec.purchase_order_ids:
+                rec.can_split_cost = False
+                continue
+
+            ok = True
+            for po in rec.purchase_order_ids:
+                bills = po.invoice_ids.filtered(
+                    lambda m: m.move_type == 'in_invoice'
+                )
+                # must have at least one draft bill
+                if not bills or all(b.state != 'draft' for b in bills):
+                    ok = False
+                    break
+
+            rec.can_split_cost = ok
+
+
+    def action_split_additional_cost(self):
+        self.ensure_one()
+        StockLandedCost = self.env['stock.landed.cost']
+
+        if not self.additional_cost_line_ids:
+            raise UserError(_("Please add additional costs to split."))
+        if not self.purchase_order_ids:
+            raise UserError(_("Please set purchase orders to split on."))
+
+        old_costs = self.env['stock.landed.cost'].search([
+            ('lc_management_id', '=', self.id),
+            ('state', '=', 'draft'),
+        ])
+        old_costs.unlink()
+
+
+        po_amounts = {po: {} for po in self.purchase_order_ids}
+
+        # Compute how much of each LC additional cost line goes to each PO
+        for line in self.additional_cost_line_ids:
+            if not line.amount:
+                continue
+
+            amounts_by_po = self._split_line_amount_by_po(line)
+
+            for po, amount in amounts_by_po.items():
+                if not amount:
+                    continue
+                po_amounts[po].setdefault(line, 0.0)
+                po_amounts[po][line] += amount
+
+        self.po_cost_line_ids.unlink()
+
+        PoCostLine = self.env['lc.po.cost.line']
+        for po, line_map in po_amounts.items():
+            for ac_line, amount in line_map.items():
+                if not amount:
+                    continue
+                PoCostLine.create({
+                    'lc_id': self.id,
+                    'purchase_id': po.id,
+                    'additional_cost_line_id': ac_line.id,
+                    'amount': amount,
+                })
+
+        created_costs = self.env['stock.landed.cost']
+        for po, amounts in po_amounts.items():
+            if not amounts:
+                continue
+
+            pickings = po.picking_ids.filtered(lambda p: p.state == 'done')
+            if not pickings:
+                continue
+
+            bill = po.invoice_ids.filtered(
+                lambda inv: inv.move_type == 'in_invoice' and inv.state in ('draft', 'posted')
+            )[:1]
+
+            cost_lines_vals = []
+            for ac_line, amount in amounts.items():
+                additional_cost = ac_line.additional_cost_id
+                product = additional_cost.product_id
+
+                expense_account = (
+                        product.property_account_expense_id
+                        or product.categ_id.property_account_expense_categ_id
+                )
+                if not expense_account:
+                    raise UserError(_(
+                        "Please configure an expense account for product '%s' or its category."
+                    ) % product.display_name)
+
+                cost_lines_vals.append((0, 0, {
+                    'name': additional_cost.name or product.display_name,
+                    'product_id': product.id,
+                    'split_method': self.split_method or 'equal',
+                    'price_unit': amount,
+                    'account_id': expense_account.id,
+                }))
+
+            vals = {
+                'lc_management_id': self.id,
+                'vendor_bill_id': bill.id if bill else False,
+                'picking_ids': [(6, 0, pickings.ids)],
+                'cost_lines': cost_lines_vals,
+            }
+            cost = StockLandedCost.create(vals)
+            created_costs |= cost
+
+
+
+
+    def _split_line_amount_by_po(self, line):
+        """
+        Split one LC additional cost line amount over purchase_order_ids.
+
+        Uses LC's split_method:
+          - equal
+          - by_quantity
+          - by_weight
+          - by_volume
+          - by_current_cost_price
+        """
+        self.ensure_one()
+        po_list = list(self.purchase_order_ids)
+        if not po_list:
+            return {}
+
+        total_line = len(po_list) or 1
+
+        qty_by_po = {}
+        weight_by_po = {}
+        volume_by_po = {}
+        cost_by_po = {}
+
+
+        for po in po_list:
+            qty_by_po[po.id] = sum(po.order_line.mapped('product_qty'))
+
+            w = v = c = 0.0
+            for pol in po.order_line:
+                qty = pol.product_qty
+                prod = pol.product_id
+                w += (prod.weight or 0.0) * qty
+                v += (prod.volume or 0.0) * qty
+                c += pol.price_subtotal
+            weight_by_po[po.id] = w
+            volume_by_po[po.id] = v
+            cost_by_po[po.id] = c
+
+        total_qty = sum(qty_by_po.values())
+        total_weight = sum(weight_by_po.values())
+        total_volume = sum(volume_by_po.values())
+        total_cost = sum(cost_by_po.values())
+
+        total_amount = line.amount or 0.0
+        if not total_amount:
+            return {po: 0.0 for po in po_list}
+
+        # use LC company currency for rounding
+        currency = self.company_id.currency_id or self.env.company.currency_id
+        rounding = currency.rounding or 0.01
+
+        result = {}
+        value_split = 0.0
+
+        method = self.split_method or 'equal'
+
+        for idx, po in enumerate(po_list):
+            is_last = (idx == len(po_list) - 1)
+            value = 0.0
+
+            if method == 'by_quantity' and total_qty:
+                per_unit = total_amount / total_qty
+                value = qty_by_po.get(po.id, 0.0) * per_unit
+
+            elif method == 'by_weight' and total_weight:
+                per_unit = total_amount / total_weight
+                value = weight_by_po.get(po.id, 0.0) * per_unit
+
+            elif method == 'by_volume' and total_volume:
+                per_unit = total_amount / total_volume
+                value = volume_by_po.get(po.id, 0.0) * per_unit
+
+            elif method == 'by_current_cost_price' and total_cost:
+                per_unit = total_amount / total_cost
+                value = cost_by_po.get(po.id, 0.0) * per_unit
+
+            elif method == 'equal':
+                value = total_amount / total_line
+
+            else:
+                value = total_amount / total_line
+
+            if rounding:
+                if is_last:
+                    value = total_amount - value_split
+                    value = tools.float_round(
+                        value,
+                        precision_rounding=rounding,
+                        rounding_method='HALF-UP',
+                    )
+                else:
+                    value = tools.float_round(
+                        value,
+                        precision_rounding=rounding,
+                        rounding_method='HALF-UP',
+                    )
+                    value_split += value
+
+            result[po] = value
+
+        return result
+
+    def _compute_po_cost_line_count(self):
+        for rec in self:
+            rec.po_cost_line_count = len(rec.po_cost_line_ids)
+
+    def action_view_po_cost_lines(self):
+        self.ensure_one()
+        action = self.env["ir.actions.actions"]._for_xml_id(
+            "lc_management.action_lc_po_cost_line"
+        )
+
+        action["domain"] = [("lc_id", "=", self.id)]
+        action["context"] = dict(self.env.context, default_lc_id=self.id)
+        return action
+
+
+
+
 

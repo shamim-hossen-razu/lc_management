@@ -1,0 +1,32 @@
+<odoo>
+
+    <!-- List view -->
+    <record id="view_lc_po_cost_line_list" model="ir.ui.view">
+        <field name="name">lc.po.cost.line.tree</field>
+        <field name="model">lc.po.cost.line</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="purchase_id" string="Purchase Order"/>
+                <field name="quantity"/>
+                <field name="current_cost"/>
+                <field name="weight"/>
+                <field name="volume"/>
+                <field name="additional_cost_id" string="Additional Cost"/>
+                <field name="amount" string="Allocated Amount" sum="Total Amount"/>
+            </list>
+        </field>
+    </record>
+
+
+
+    <!-- Action -->
+    <record id="action_lc_po_cost_line" model="ir.actions.act_window">
+        <field name="name">PO Cost Split</field>
+        <field name="res_model">lc.po.cost.line</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_lc_po_cost_line_list"/>
+        <field name="domain">[('lc_id', '=', active_id)]</field>
+        <field name="context">{'default_lc_id': active_id}</field>
+    </record>
+
+</odoo>
