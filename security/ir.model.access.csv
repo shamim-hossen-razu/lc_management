@@ -6,3 +6,4 @@ access_lc_additional_cost_user,access_lc_additional_cost_user,model_lc_additiona
 access_lc_management_additional_cost_line_user,access_lc_additional_cost_line_user,model_lc_additional_cost_line,base.group_user,1,1,1,1
 access_lc_template_user,access_lc_template_user,model_lc_template,base.group_user,1,1,1,1
 access_lc_template_ac_line_user,access_lc_template_ac_line_user,model_lc_template_ac_line,base.group_user,1,1,1,1
+access_lc_po_cost_line_user,access_lc_po_cost_line_user,model_lc_po_cost_line,base.group_user,1,1,1,1

@@ -108,7 +108,7 @@ class ResCompany(models.Model):
                     filename = vals.get(f"{field}_filename", f"{field}.pdf")
 
                     # -----------------------------------------------------------
-                    # Step 1: Find and delete any old attachment/document records
+                    # Find and delete any old attachment/document records
                     # -----------------------------------------------------------
 
                     old_attachment = Attachment.search([
@@ -128,7 +128,7 @@ class ResCompany(models.Model):
                         old_attachment.unlink()
 
                     # -----------------------------------------------------------
-                    # Step 2: Create a fresh ir.attachment for the new upload
+                    # Create a fresh ir.attachment for the new upload
                     # -----------------------------------------------------------
 
                     new_attachment = Attachment.create({
@@ -141,7 +141,7 @@ class ResCompany(models.Model):
                     })
 
                     # -----------------------------------------------------------
-                    # Step 3: Create a linked documents.document record
+                    #  Create a linked documents.document record
                     # -----------------------------------------------------------
 
                     Document.create({
