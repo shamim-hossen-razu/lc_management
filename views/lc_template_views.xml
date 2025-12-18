@@ -1,0 +1,140 @@
+<odoo>
+    <!-- List view -->
+    <record id="view_lc_template_list" model="ir.ui.view">
+        <field name="name">lc.template.list</field>
+        <field name="model">lc.template</field>
+        <field name="arch" type="xml">
+            <list string="LC Templates">
+                <field name="name"/>
+                <field name="lc_type"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form view -->
+    <record id="view_lc_template_form" model="ir.ui.view">
+        <field name="name">lc.template.form</field>
+        <field name="model">lc.template</field>
+        <field name="arch" type="xml">
+            <form string="LC Template">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="lc_type"/>
+                            <field name="issuing_bank_id"/>
+                            <field name="advising_bank_id"/>
+                        </group>
+                        <group>
+                            <field name="beneficiary_company_id"/>
+                            <field name="beneficiary_id"
+                                   domain="[('parent_id', '=', beneficiary_company_id), ('is_company', '=', False)]"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="General Information">
+                            <group>
+                                <group string="Account &amp; Details">
+                                    <field name="acc_name"/>
+                                    <field name="account_no"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Shipment Details">
+                             <group>
+                                <group >
+                                    <field name="mode_of_shipment"/>
+                                    <field name="partial_shipment"/>
+                                </group>
+                                <group>
+                                    <field name="transshipment"/>
+                                    <field name="required_documents"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- Availability & Charges -->
+                        <page string="Availability and Charges">
+                            <group>
+                                <group>
+                                    <field name="available_by"/>
+                                </group>
+                                <group>
+                                    <field name="charges_borne_by"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Insurance">
+                            <group>
+                                <group>
+                                    <field name="insurance_policy_no"/>
+                                    <field name="insurance_company_id"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- Certificates -->
+                        <page string="Certificates">
+                            <group>
+                                <group>
+                                    <field name="noc"/>
+                                    <field name="bin_certificate"/>
+                                </group>
+                                <group>
+                                    <field name="tax_clearance_certificate"/>
+                                    <field name="etin_certificate"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Additional Costs">
+                            <field name="ac_template_line_ids">
+                                <list editable="bottom">
+                                    <field name="additional_cost_id"
+                                           domain="[
+                                           '|',
+                                           ('lc_type', '=', False),
+                                           ('lc_type', '=', parent.lc_type)
+                                       ]"/>
+                                    <field name="amount"/>
+                                    <field name="note"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- Terms & Remarks -->
+                        <page string="Terms and Remarks">
+                            <group>
+                                <group>
+                                    <field name="terms_and_conditions"/>
+                                </group>
+                                <group>
+                                    <field name="remarks"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_lc_template" model="ir.actions.act_window">
+        <field name="name">LC Templates</field>
+        <field name="res_model">lc.template</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+
+    <menuitem
+        id="menu_lc_template"
+        name="LC Templates"
+        parent="menu_lc_configuration"
+        action="action_lc_template"
+        sequence="30"
+    />
+
+</odoo>

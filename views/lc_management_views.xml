@@ -27,7 +27,19 @@
                 <header>
                     <field name="status" widget="statusbar"/>
                 </header>
+
                 <sheet>
+                    <!-- SMART BUTTONS -->
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_open_attachments"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-paperclip">
+                            <field name="attachment_count"
+                                   widget="statinfo"
+                                   string="Attachments"/>
+                        </button>
+                    </div>
                     <group>
                         <group>
                             <field name="lc_number"/>
@@ -54,6 +66,7 @@
                                         help="Compute LC Amount based on selected Purchase Orders."
                                         class="oe_link pt-2"/>
                             </div>
+                            <field name="lc_template_id"/>
 
                         </group>
                         <group>
@@ -150,6 +163,21 @@
                                     <field name="etin_certificate"/>
                                 </group>
                             </group>
+                        </page>
+
+                        <!-- Additional Costs -->
+                        <page string="Additional Costs">
+                            <field name="additional_cost_line_ids">
+                                <list editable="bottom">
+                                    <field name="additional_cost_id"
+                                           domain="[ '|',
+                                             ('lc_type', '=', False),
+                                             ('lc_type', '=', parent.lc_type)
+                                           ]"/>
+                                    <field name="amount" sum="Total"/>
+                                    <field name="note"/>
+                                </list>
+                            </field>
                         </page>
 
                         <!-- Terms & Remarks -->

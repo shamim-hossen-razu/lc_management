@@ -21,6 +21,8 @@
         'views/res_bank_views.xml',
         'views/lc_bank_role_views.xml',
         'views/lc_management_views.xml',
+        'views/lc_additional_cost_views.xml',
+        'views/lc_template_views.xml',
     ],
 
     'demo': [

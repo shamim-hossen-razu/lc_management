@@ -22,7 +22,7 @@ class LcManagement(models.Model):
 
     amount = fields.Float(string="Amount", help="Total amount guaranteed by the LC")
     expiration_date = fields.Date(string="Expiration Date", help="Expiration date of the LC")
-    terms_and_conditions = fields.Html(string="Terms and Conditions", help="Terms and conditions of the LC")
+
 
     lc_type = fields.Selection([
         ('revocable', 'Revocable LC'),
@@ -70,6 +70,7 @@ class LcManagement(models.Model):
     ], string="Mode of Shipment")
     bonded_warehouse_expiry = fields.Date(string="Bonded Warehouse Expiry", help="Only available for import, back_to_back, foreign_back_to_back, local_back_to_back, transferable, standby.")
 
+
     # Related fields
     # product_line_ids = fields.One2many()
     # extra_cost_ids = fields.One2many()
@@ -107,8 +108,10 @@ class LcManagement(models.Model):
     parent_lc_id = fields.Many2one('lc.management', string="Parent LC", help="For back-to-back LC linkage")
 
     # Other Information
+    terms_and_conditions = fields.Html(string="Terms and Conditions", help="Terms and conditions of the LC")
     remarks = fields.Text(string="Remarks")
     attachment_ids = fields.Many2many('ir.attachment', string="Attachments")
+    attachment_count = fields.Integer(string="Attachments",compute='_compute_attachment_count')
     company_id = fields.Many2one(
         'res.company',
         default=lambda self: self.env.company,
@@ -134,6 +137,15 @@ class LcManagement(models.Model):
     
     currency_rate_line_ids = fields.One2many(
         'lc.currency.rate.line', 'lc_id', string="Currency Rates", readonly=True
+    )
+
+    additional_cost_line_ids = fields.One2many('lc.additional.cost.line','lc_id',string="Additional Costs",)
+    
+    # LC Template
+    lc_template_id = fields.Many2one(
+        'lc.template',
+        string="LC Template",
+        help="Selecting a template will auto-fill fields and lines like Sales Quotation Template.",
     )
 
 
@@ -229,7 +241,9 @@ class LcManagement(models.Model):
     @api.onchange('beneficiary_company_id')
     def _onchange_beneficiary_company_id(self):
         for rec in self:
-            rec.beneficiary_id = False  # Clear selection each time
+            # Only reset if the current beneficiary doesn't match the company
+            if rec.beneficiary_id and rec.beneficiary_id.parent_id != rec.beneficiary_company_id:
+                rec.beneficiary_id = False
 
             if rec.beneficiary_company_id:
                 # Only show child contacts (is_company=False)
@@ -285,4 +299,80 @@ class LcManagement(models.Model):
             rec.amount = total
             rec.currency_id = target_currency
 
+    @api.depends('attachment_ids')
+    def _compute_attachment_count(self):
+        for rec in self:
+            rec.attachment_count = len(rec.attachment_ids)
+
+    def action_open_attachments(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Attachments'),
+            'res_model': 'ir.attachment',
+            'view_mode': 'list,form',
+            'domain': [('id', 'in', self.attachment_ids.ids)],
+            'context': {
+                'default_res_model': self._name,
+                'default_res_id': self.id,
+            },
+        }
+
+    @api.onchange('lc_template_id')
+    def _onchange_lc_template_id(self):
+        """
+        On changing the LC Template, auto-fill fields from the selected template.
+        """
+        for rec in self:
+            template = rec.lc_template_id
+            if not template:
+                continue
+
+            if template.lc_type:
+                rec.lc_type = template.lc_type
+            if template.beneficiary_company_id:
+                rec.beneficiary_company_id = template.beneficiary_company_id.id
+            if template.beneficiary_id:
+                rec.beneficiary_id = template.beneficiary_id.id
+            if template.issuing_bank_id:
+                rec.issuing_bank_id = template.issuing_bank_id.id
+            if template.advising_bank_id:
+                rec.advising_bank_id = template.advising_bank_id.id
+            if template.acc_name:
+                rec.acc_name = template.acc_name
+            if template.account_no:
+                rec.account_no = template.account_no
+            if template.insurance_policy_no:
+                rec.insurance_policy_no = template.insurance_policy_no
+            if template.insurance_company_id:
+                rec.insurance_company_id = template.insurance_company_id.id
+            if template.partial_shipment is not None:
+                rec.partial_shipment = template.partial_shipment
+            if template.transshipment is not None:
+                rec.transshipment = template.transshipment
+            if template.required_documents:
+                rec.required_documents = template.required_documents
+            if template.mode_of_shipment:
+                rec.mode_of_shipment = template.mode_of_shipment
+            if template.available_by:
+                rec.available_by = template.available_by
+            if template.charges_borne_by:
+                rec.charges_borne_by = template.charges_borne_by
+            if template.terms_and_conditions:
+                rec.terms_and_conditions = template.terms_and_conditions
+            if template.remarks:
+                rec.remarks = template.remarks
+
+            # Populate additional cost lines from the template
+            line_commands = [(5, 0, 0)]  # clear existing lines of additional cost line
+            for line in template.ac_template_line_ids:
+                line_vals = {
+                    'additional_cost_id': line.additional_cost_id.id,
+                    'amount': line.amount,
+                    'note': line.note,
+                    # add any other fields if necessary
+                }
+                line_commands.append((0, 0, line_vals))
+
+            rec.additional_cost_line_ids = line_commands
 
