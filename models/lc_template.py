@@ -1,11 +1,15 @@
 from odoo import models, fields, api, _
+from odoo.exceptions import ValidationError
 
 
 class LcTemplate(models.Model):
     _name = 'lc.template'
     _description = 'LC Template'
+    _order = 'priority desc, create_date desc, id desc'
 
     name = fields.Char(string="Template Name", required=True)
+    priority = fields.Selection(
+        [('0', 'Normal'), ('1', 'Urgent')], 'Priority', default='0', index=True)
 
     # Fields that want to be pre-defined in the template
     lc_type = fields.Selection([
@@ -30,11 +34,11 @@ class LcTemplate(models.Model):
     beneficiary_id = fields.Many2one('res.partner', string="Beneficiary", domain=[],
                                      help="Individual contact under the selected company (Seller/Exporter)")
 
-    issuing_bank_id = fields.Many2one('res.bank', string="Issuing Bank", help="Bank issuing the LC for the buyer")
-    advising_bank_id = fields.Many2one('res.bank', string="Advising Bank", help="Bank advising the LC to the seller")
+    issuing_bank_id = fields.Many2one('res.bank', string="Issuing Bank", help="Bank issuing the LC for the buyer", copy=False)
+    advising_bank_id = fields.Many2one('res.bank', string="Advising Bank", help="Bank advising the LC to the seller", copy=False)
 
-    acc_name = fields.Char(string="Account Name")
-    account_no = fields.Integer(string="Account Number")
+    acc_name = fields.Char(string="Account Name", copy=False)
+    bank_account_id = fields.Many2one('res.partner.bank', string="Account No", help="Bank account number", copy=False)
 
     # Insurance Info
     insurance_policy_no = fields.Char(string="Insurance Policy No")
@@ -80,3 +84,28 @@ class LcTemplate(models.Model):
     # Other Information
     terms_and_conditions = fields.Html(string="Terms and Conditions", help="Terms and conditions of the LC")
     remarks = fields.Text(string="Remarks")
+
+    @api.constrains('bank_account_id')
+    def _check_unique_bank_account(self):
+        for record in self:
+            if record.bank_account_id:
+                duplicate = self.search([
+                    ('bank_account_id', '=', record.bank_account_id.id),
+                    ('id', '!=', record.id)
+                ], limit=1)
+
+                if duplicate:
+                    raise ValidationError(_(
+                        "This bank account (%s) is already used in another LC Template: %s. "
+                        "Please select a different bank account."
+                    ) % (record.bank_account_id.acc_number, duplicate.name))
+
+    def copy_data(self, default=None):
+        self.ensure_one()
+        default = dict(default or {})
+        default.setdefault('name', _("%s (copy)") % (self.name or _("New")))
+        return super().copy_data(default)
+
+    @api.onchange('beneficiary_company_id')
+    def _onchange_beneficiary_company_id(self):
+        self.beneficiary_id = False

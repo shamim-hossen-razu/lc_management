@@ -10,3 +10,4 @@ from . import lc_template
 from . import lc_template_ac_line
 from . import lc_po_cost_line
 from . import stock_landed_cost
+from . import purchase_order

@@ -11,9 +11,10 @@
     'website': "https://www.bjitgroup.com",
     'category': 'Uncategorized',
     'version': '18.0.1.0.0',
-    'depends': ['base', 'sale_management', 'purchase', 'stock', 'accountant', 'contacts', 'documents', 'product', 'stock_landed_costs'],
+    'depends': ['base', 'sale_management', 'purchase', 'stock', 'accountant', 'contacts', 'documents', 'product', 'stock_landed_costs', 'mail'],
 
     'data': [
+        'security/lc_management_security.xml',
         'security/ir.model.access.csv',
         'data/lc_bank_role_data.xml',
         'data/lc_sequence.xml',
@@ -24,6 +25,7 @@
         'views/lc_additional_cost_views.xml',
         'views/lc_template_views.xml',
         'views/lc_po_cost_line_views.xml',
+        'views/purchase_order_views.xml',
     ],
 
     'demo': [

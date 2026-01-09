@@ -5,6 +5,7 @@
         <field name="model">lc.management</field>
         <field name="arch" type="xml">
             <list string="Letters of Credit">
+                <field name="priority" optional="show" widget="priority" nolabel="1"/>
                 <field name="lc_number"/>
                 <field name="applicant_id"/>
                 <field name="beneficiary_id"/>
@@ -26,12 +27,40 @@
             <form string="Letter of Credit" create="true" edit="true">
                 <header>
                     <button name="action_split_additional_cost"
-                        type="object"
-                        string="Split"
-                        class="oe_highlight"
-                        invisible="not can_split_cost"/>
+                            type="object"
+                            string="Split"
+                            class="oe_highlight"
+                            invisible="not can_split_cost"/>
 
                     <field name="status" widget="statusbar" options="{'clickable': '1'}"/>
+
+                    <!-- Buttons for workflow -->
+                    <button name="action_submit" string="Submit" type="object"
+                            class="oe_highlight" invisible="status != 'draft'"/>
+
+                    <button name="action_approve" string="Approve" type="object"
+                            class="oe_highlight" invisible="status != 'submitted'"
+                            groups="lc_management.group_lc_manager"/>
+
+                    <button name="action_advise" string="Advise" type="object"
+                            class="oe_highlight" invisible="status != 'approved'"/>
+
+                    <button name="action_active" string="Active" type="object"
+                            class="oe_highlight" invisible="status != 'advised'"/>
+
+                    <button name="action_amend" string="Amend" type="object"
+                            invisible="status not in ['approved', 'advised',]"/>
+
+                    <button name="action_close" string="Close LC" type="object"
+                            invisible="status not in ['amend', 'active']"/>
+
+                    <button name="action_cancel" string="Cancel" type="object"
+                            invisible="status not in ['submitted', 'approved', 'advised', 'active', 'amend']"
+                            groups="lc_management.group_lc_manager"/>
+
+                    <button name="action_draft" string="Reset to Draft" type="object"
+                            invisible="status not in ['cancelled']"/>
+
                 </header>
 
                 <sheet>
@@ -40,7 +69,8 @@
                         <button name="action_open_attachments"
                                 type="object"
                                 class="oe_stat_button"
-                                icon="fa-paperclip">
+                                icon="fa-paperclip"
+                                invisible="attachment_count == 0">
                             <field name="attachment_count"
                                    widget="statinfo"
                                    string="Attachments"/>
@@ -56,11 +86,25 @@
                                    string="PO Split"/>
                         </button>
 
+                        <button name="action_view_purchase_orders"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-shopping-cart"
+                                invisible="po_count == 0">
+                            <field name="po_count" widget="statinfo" string="Purchases"/>
+                        </button>
+                    </div>
 
+                    <!--TITLE-->
+                    <div class="oe_title">
+                        <span class="o_form_label">LC Number</span>
+                        <h1 class="d-flex">
+                            <field name="priority" widget="priority" class="me-3"/>
+                            <field name="lc_number" readonly="1"/>
+                        </h1>
                     </div>
                     <group>
                         <group>
-                            <field name="lc_number"/>
                             <field name="lc_type"/>
                             <field name="issuing_bank_id"/>
                             <field name="advising_bank_id"/>
@@ -73,6 +117,7 @@
                                 <field name="purchase_order_ids"
                                        widget="many2many_tags"
                                        domain="[
+                                            ('id', 'not in', blocked_purchase_order_ids),
                                            ('state', '=', 'purchase'),
                                            '|',
                                            ('partner_id', '=', beneficiary_company_id),
@@ -82,7 +127,16 @@
                                         type="object"
                                         string="Compute from POs"
                                         help="Compute LC Amount based on selected Purchase Orders."
-                                        class="oe_link pt-2"/>
+                                        class="oe_link pt-2"
+                                        invisible="status not in ('draft','submitted') or is_outdated_po"/>
+                                <field name="is_outdated_po" invisible="1"/>
+
+                                <button name="action_update_from_po"
+                                        type="object"
+                                        string="Update &amp; Recompute"
+                                        class="btn btn-danger mt-2"
+                                        invisible="status not in ('draft','submitted') or not is_outdated_po"/>
+
                             </div>
                             <field name="lc_template_id"/>
 
@@ -91,7 +145,9 @@
                             <field name="applicant_company_id"/>
                             <field name="applicant_id"/>
                             <field name="beneficiary_company_id"/>
-                            <field name="beneficiary_id" domain="[('parent_id', '=', beneficiary_company_id), ('is_company', '=', False)]"/>
+                            <field name="beneficiary_id"
+                                   context="{'default_parent_id': beneficiary_company_id, 'default_is_company': False}"
+                                   domain="[('parent_id', '=', beneficiary_company_id), ('is_company', '=', False)]"/>
                             <field name="reference"/>
                             <field name="split_method"/>
                             <field name="can_split_cost" invisible="1"/>
@@ -105,7 +161,7 @@
                             <group>
                                 <group string="Account &amp; Details">
                                     <field name="acc_name"/>
-                                    <field name="account_no"/>
+                                    <field name="bank_account_id" domain="[('bank_id','=',advising_bank_id),]" context="{'default_bank_id': advising_bank_id}"/>
                                     <field name="amount"/>
                                     <field name="currency_id"/>
                                     <field name="currency_rate"/>
@@ -231,6 +287,7 @@
                         </page>
                     </notebook>
                 </sheet>
+                <chatter/>
             </form>
         </field>
     </record>

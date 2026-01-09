@@ -20,6 +20,7 @@
                 <sheet>
                     <group>
                         <group>
+                            <field name="priority" widget="priority"/>
                             <field name="name"/>
                             <field name="lc_type"/>
                             <field name="issuing_bank_id"/>
@@ -28,6 +29,7 @@
                         <group>
                             <field name="beneficiary_company_id"/>
                             <field name="beneficiary_id"
+                                   context="{'default_parent_id': beneficiary_company_id, 'default_is_company': False}"
                                    domain="[('parent_id', '=', beneficiary_company_id), ('is_company', '=', False)]"/>
                         </group>
                     </group>
@@ -36,7 +38,7 @@
                             <group>
                                 <group string="Account &amp; Details">
                                     <field name="acc_name"/>
-                                    <field name="account_no"/>
+                                    <field name="bank_account_id" domain="[('bank_id','=',advising_bank_id),]" context="{'default_bank_id': advising_bank_id}"/>
                                 </group>
                             </group>
                         </page>
