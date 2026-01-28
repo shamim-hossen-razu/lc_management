@@ -1,0 +1,18 @@
+<odoo>
+    <record id="view_purchase_order_inherit" model="ir.ui.view">
+        <field name="name">purchase.order.form.inherit.lc</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_lc_requests"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-file-text-o"
+                        invisible="lc_count == 0">
+                    <field name="lc_count" widget="statinfo" string="LC Requests"/>
+                </button>
+            </xpath>
+        </field>
+    </record>
+</odoo>
